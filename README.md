@@ -41,18 +41,31 @@ This repository contains scripts for automating email operations with Brevo, con
 ### 2. Email Templates
 
 1. Place your HTML email templates in the `email-templates` directory
-2. Update the template paths in `auto-upload-brevo-templates.js` to use relative paths:
-   ```javascript
-   const templateConfigs = [
-     {
-       templateName: "Welcome Email 1 - Thanks",
-       subject: "Welcome to Propel Flow AI - Thanks for Subscribing!",
-       htmlFile: "./email-templates/welcome_email_1_thanks.html",
-       // other properties...
-     },
-     // other templates...
-   ];
-   ```
+2. The system will automatically:
+   - Detect all HTML files in the `email-templates` directory
+   - Generate template names, subjects, and tags based on the file names
+   - Upload the templates to Brevo
+   - Move successfully uploaded templates to the `email-templates/sent` folder with a timestamp
+
+#### How Template Information is Generated
+
+The system extracts template information from the HTML file names:
+
+- **Template Name**: Generated from the file name by replacing underscores and hyphens with spaces and capitalizing words
+  - Example: `strategic_ai_paths_enhanced.html` → "Strategic Ai Paths Enhanced"
+
+- **Subject Line**: Uses the template name and adds "- Propel Flow AI"
+  - Example: "Strategic Ai Paths Enhanced - Propel Flow AI"
+
+- **Tag**: Uses the text before the first underscore or hyphen, or "general" if none is found
+  - Example: `strategic_ai_paths_enhanced.html` → "strategic"
+
+#### Workflow
+
+1. Place HTML files in the `email-templates` directory
+2. Run the template uploader (manually or via scheduled GitHub Action)
+3. Successfully uploaded templates are moved to `email-templates/sent` with a timestamp
+4. Failed uploads remain in the `email-templates` directory for retry
 
 ## Workflows
 
