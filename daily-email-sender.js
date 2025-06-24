@@ -32,76 +32,6 @@ function log(message) {
   fs.appendFileSync(LOG_FILE, logMessage + '\n');
 }
 
-// Function to find the newest HTML file in a directory
-function findNewestHtmlFile(directory) {
-  try {
-    // Check if directory exists
-    if (!fs.existsSync(directory)) {
-      log(`Directory not found: ${directory}`);
-      return null;
-    }
-    
-    // Get all files in the directory
-    const files = fs.readdirSync(directory);
-    
-    // Filter for HTML files and exclude directories
-    const htmlFiles = files.filter(file => {
-      const filePath = path.join(directory, file);
-      return fs.statSync(filePath).isFile() && 
-             path.extname(file).toLowerCase() === '.html';
-    });
-    
-    if (htmlFiles.length === 0) {
-      log(`No HTML files found in directory: ${directory}`);
-      return null;
-    }
-    
-    // Get file stats and sort by modification time (newest first)
-    const fileStats = htmlFiles.map(file => {
-      const filePath = path.join(directory, file);
-      return {
-        path: filePath,
-        stats: fs.statSync(filePath)
-      };
-    }).sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
-    
-    // Return the path of the newest file
-    log(`Found newest HTML file: ${fileStats[0].path}`);
-    return fileStats[0].path;
-  } catch (error) {
-    log(`Error finding newest HTML file: ${error.message}`);
-    return null;
-  }
-}
-
-// Parse command line arguments
-// Format: node daily-email-sender.js [email-template-path]
-let emailTemplatePath = process.argv[2];
-
-// If no template path is provided, try to find the newest HTML file in the email-templates directory
-if (!emailTemplatePath) {
-  const readyToSendDir = path.join(__dirname, 'email-templates', 'ready-to-send');
-  const emailTemplatesDir = path.join(__dirname, 'email-templates');
-  
-  // First check the ready-to-send directory if it exists
-  if (fs.existsSync(readyToSendDir)) {
-    emailTemplatePath = findNewestHtmlFile(readyToSendDir);
-  }
-  
-  // If no file found in ready-to-send, check the main email-templates directory
-  if (!emailTemplatePath) {
-    emailTemplatePath = findNewestHtmlFile(emailTemplatesDir);
-  }
-  
-  if (emailTemplatePath) {
-    log(`Automatically selected template: ${emailTemplatePath}`);
-  } else {
-    log('No HTML template files found. Please provide a template path.');
-    process.exit(1);
-  }
-}
-
-
 /**
  * Move the email template to the sent folder
  * @param {string} templatePath - Path to the email template
@@ -145,12 +75,81 @@ async function moveToSentFolder(templatePath) {
   });
 }
 
+// Function to find the newest HTML file in a directory
+function findNewestHtmlFile(directory) {
+  try {
+    // Check if directory exists
+    if (!fs.existsSync(directory)) {
+      log(`Directory not found: ${directory}`);
+      return null;
+    }
+    
+    // Get all files in the directory
+    const files = fs.readdirSync(directory);
+    
+    // Filter for HTML files and exclude directories
+    const htmlFiles = files.filter(file => {
+      const filePath = path.join(directory, file);
+      return fs.statSync(filePath).isFile() && 
+             path.extname(file).toLowerCase() === '.html';
+    });
+    
+    if (htmlFiles.length === 0) {
+      log(`No HTML files found in directory: ${directory}`);
+      return null;
+    }
+    
+    // Get file stats and sort by modification time (newest first)
+    const fileStats = htmlFiles.map(file => {
+      const filePath = path.join(directory, file);
+      return {
+        path: filePath,
+        stats: fs.statSync(filePath)
+      };
+    }).sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
+    
+    // Return the path of the newest file
+    log(`Found newest HTML file: ${fileStats[0].path}`);
+    return fileStats[0].path;
+  } catch (error) {
+    log(`Error finding newest HTML file: ${error.message}`);
+    return null;
+  }
+}
+
 /**
  * Main function to fetch subscribers and send emails
  */
 async function main() {
   try {
     log('Starting daily email process...');
+    
+    // Parse command line arguments
+    // Format: node daily-email-sender.js [email-template-path]
+    let emailTemplatePath = process.argv[2];
+
+    // If no template path is provided, try to find the newest HTML file in the email-templates directory
+    if (!emailTemplatePath) {
+      const readyToSendDir = path.join(__dirname, 'email-templates', 'ready-to-send');
+      const emailTemplatesDir = path.join(__dirname, 'email-templates');
+      
+      // First check the ready-to-send directory if it exists
+      if (fs.existsSync(readyToSendDir)) {
+        emailTemplatePath = findNewestHtmlFile(readyToSendDir);
+      }
+      
+      // If no file found in ready-to-send, check the main email-templates directory
+      if (!emailTemplatePath) {
+        emailTemplatePath = findNewestHtmlFile(emailTemplatesDir);
+      }
+      
+      if (emailTemplatePath) {
+        log(`Automatically selected template: ${emailTemplatePath}`);
+      } else {
+        log('No HTML template files found. Please provide a template path.');
+        process.exit(1);
+      }
+    }
     
     // Fetch latest subscribers from Brevo API
     log('Fetching subscribers...');
