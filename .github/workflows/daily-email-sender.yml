@@ -37,6 +37,14 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
 
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add sent-emails/ email-templates/
+          git diff --quiet && git diff --staged --quiet || git commit -m "Move email template to sent folder [skip ci]"
+          git push
+
       - name: Upload logs as artifacts
         uses: actions/upload-artifact@v4
         with:

@@ -10,15 +10,18 @@ const BASE_URL = 'https://api.brevo.com/v3';
 // Path to the HTML template
 // Default path can be overridden by command line argument
 const DEFAULT_TEMPLATE_PATH = path.join(__dirname, 'email-templates', 'welcome_email_1_thanks.html');
-const EMAIL_TEMPLATE_PATH = process.argv[2] || DEFAULT_TEMPLATE_PATH;
 
 /**
  * Read the HTML template file
+ * @param {string} templatePath - Optional path to the template file
  * @returns {Promise<string>} The HTML content
  */
-async function readEmailTemplate() {
+async function readEmailTemplate(templatePath) {
+  // Use the provided template path, or the command line argument, or the default
+  const emailTemplatePath = templatePath || process.argv[2] || DEFAULT_TEMPLATE_PATH;
+  
   return new Promise((resolve, reject) => {
-    fs.readFile(EMAIL_TEMPLATE_PATH, 'utf8', (err, data) => {
+    fs.readFile(emailTemplatePath, 'utf8', (err, data) => {
       if (err) {
         console.error('❌ Error reading email template:', err);
         reject(err);
@@ -34,12 +37,13 @@ async function readEmailTemplate() {
  * @param {string} subscriberEmail - The subscriber's email address
  * @param {string} subscriberName - The subscriber's name
  * @param {Object} attributes - The subscriber's attributes for personalization
+ * @param {string} templatePath - Optional path to the template file
  * @returns {Promise<object>} The result from Brevo API
  */
-async function sendWelcomeEmail(subscriberEmail, subscriberName, attributes = {}) {
+async function sendWelcomeEmail(subscriberEmail, subscriberName, attributes = {}, templatePath) {
   try {
     // Read the HTML template
-    const htmlContent = await readEmailTemplate();
+    const htmlContent = await readEmailTemplate(templatePath);
     
     // Create the email payload
     const emailPayload = {
@@ -87,16 +91,17 @@ async function sendWelcomeEmail(subscriberEmail, subscriberName, attributes = {}
 /**
  * Send the welcome email to a list of subscribers
  * @param {Array<{email: string, name: string, attributes: Object}>} subscribers - List of subscribers
+ * @param {string} templatePath - Optional path to the template file
  * @returns {Promise<Array>} Results from sending emails
  */
-async function sendToSubscribers(subscribers) {
+async function sendToSubscribers(subscribers, templatePath) {
   console.log(`Starting to send emails to ${subscribers.length} subscribers...`);
   
   const results = [];
   for (const subscriber of subscribers) {
     try {
       console.log(`Sending to ${subscriber.email}...`);
-      const result = await sendWelcomeEmail(subscriber.email, subscriber.name, subscriber.attributes || {});
+      const result = await sendWelcomeEmail(subscriber.email, subscriber.name, subscriber.attributes || {}, templatePath);
       results.push({ success: true, email: subscriber.email, result });
       
       // Add a small delay between sends to avoid rate limiting

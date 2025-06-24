@@ -161,13 +161,11 @@ async function main() {
     
     // Send emails to all subscribers
     log('Sending welcome emails to subscribers...');
-    // If email template path is provided, pass it to the sendToSubscribers function
-    // by modifying process.argv for the send-welcome-email module
+    // If email template path is provided, pass it directly to the sendToSubscribers function
     if (emailTemplatePath) {
       log(`Using custom email template: ${emailTemplatePath}`);
-      process.argv[2] = emailTemplatePath;
     }
-    const results = await sendToSubscribers(subscribers);
+    const results = await sendToSubscribers(subscribers, emailTemplatePath);
     
     // Log results
     const successful = results.filter(r => r.success).length;
