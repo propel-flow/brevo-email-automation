@@ -1,0 +1,23 @@
+{
+  "name": "brevo-email-automation",
+  "version": "1.0.0",
+  "description": "Send emails to Brevo subscribers and manage email templates using GitHub Actions",
+  "main": "daily-email-sender.js",
+  "scripts": {
+    "start": "node daily-email-sender.js",
+    "test": "node get-brevo-subscribers.js",
+    "upload-templates": "node auto-upload-brevo-templates.js",
+    "test:email": "node test-workflow.js email",
+    "test:template": "node test-workflow.js template",
+    "generate-template-list": "node generate-template-list.js",
+    "view-templates": "npx serve -s . -p 3000",
+    "init": "node init-repo.js"
+  },
+  "dependencies": {
+    "@getbrevo/brevo": "^1.0.1",
+    "axios": "^1.10.0",
+    "dotenv": "^16.3.1",
+    "node-cron": "^3.0.2",
+    "nodemailer": "^6.10.1"
+  }
+}

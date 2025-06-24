@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Template Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .controls {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+    select, button {
+      padding: 8px 12px;
+      margin-right: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #fff;
+      cursor: pointer;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .preview {
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 5px;
+      background-color: #fff;
+      min-height: 400px;
+    }
+    .preview-container {
+      display: flex;
+      flex-direction: column;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .preview-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .preview-actions {
+      display: flex;
+    }
+    .preview-actions button {
+      margin-left: 10px;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Email Template Viewer</h1>
+    
+    <div class="controls">
+      <label for="template-select">Select Template:</label>
+      <select id="template-select">
+        <option value="">Loading templates...</option>
+      </select>
+      
+      <button id="refresh-btn">Refresh</button>
+      <button id="edit-btn">Edit in VS Code</button>
+    </div>
+    
+    <div class="preview-container">
+      <div class="preview-header">
+        <div class="preview-title">Preview</div>
+        <div class="preview-actions">
+          <button id="mobile-view-btn">Mobile View</button>
+          <button id="desktop-view-btn">Desktop View</button>
+        </div>
+      </div>
+      
+      <div class="preview">
+        <iframe id="template-preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM elements
+    const templateSelect = document.getElementById('template-select');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const editBtn = document.getElementById('edit-btn');
+    const mobileViewBtn = document.getElementById('mobile-view-btn');
+    const desktopViewBtn = document.getElementById('desktop-view-btn');
+    const templatePreview = document.getElementById('template-preview');
+    
+    // Base path for templates
+    const templatesPath = './email-templates/';
+    
+    // Load templates
+    async function loadTemplates() {
+      try {
+        const response = await fetch('email-templates-list.json');
+        if (!response.ok) {
+          throw new Error('Failed to load templates list');
+        }
+        
+        const templates = await response.json();
+        templateSelect.innerHTML = '';
+        
+        templates.forEach(template => {
+          const option = document.createElement('option');
+          option.value = template;
+          option.textContent = template.replace('.html', '');
+          templateSelect.appendChild(option);
+        });
+        
+        // Load the first template
+        if (templates.length > 0) {
+          loadTemplate(templates[0]);
+        }
+      } catch (error) {
+        console.error('Error loading templates:', error);
+        templateSelect.innerHTML = '<option value="">No templates found</option>';
+      }
+    }
+    
+    // Load a specific template
+    function loadTemplate(templateName) {
+      const templatePath = templatesPath + templateName;
+      templatePreview.src = templatePath;
+    }
+    
+    // Event listeners
+    templateSelect.addEventListener('change', () => {
+      if (templateSelect.value) {
+        loadTemplate(templateSelect.value);
+      }
+    });
+    
+    refreshBtn.addEventListener('click', () => {
+      loadTemplates();
+    });
+    
+    editBtn.addEventListener('click', () => {
+      if (templateSelect.value) {
+        // This will only work if opened via VS Code's Live Server
+        window.open('vscode://file/' + window.location.pathname.replace('view-template.html', 'email-templates/' + templateSelect.value));
+      }
+    });
+    
+    mobileViewBtn.addEventListener('click', () => {
+      templatePreview.style.width = '375px';
+      templatePreview.style.margin = '0 auto';
+    });
+    
+    desktopViewBtn.addEventListener('click', () => {
+      templatePreview.style.width = '100%';
+      templatePreview.style.margin = '0';
+    });
+    
+    // Generate templates list on load
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Fetch the list of templates from the server
+        const response = await fetch('generate-template-list.php');
+        if (response.ok) {
+          loadTemplates();
+        } else {
+          templateSelect.innerHTML = '<option value="welcome_email_1_thanks.html">welcome_email_1_thanks</option>';
+          loadTemplate('welcome_email_1_thanks.html');
+        }
+      } catch (error) {
+        console.error('Error generating template list:', error);
+        templateSelect.innerHTML = '<option value="welcome_email_1_thanks.html">welcome_email_1_thanks</option>';
+        loadTemplate('welcome_email_1_thanks.html');
+      }
+    });
+  </script>
+</body>
+</html>
