@@ -9,6 +9,29 @@ const SENT_FOLDER = process.env.GITHUB_ACTIONS
   ? path.join(process.env.GITHUB_WORKSPACE, 'sent-emails')
   : path.join(__dirname, 'sent-emails');
 
+// Create logs directory if it doesn't exist
+const LOGS_DIR = path.join(__dirname, 'email-logs');
+if (!fs.existsSync(LOGS_DIR)) {
+  fs.mkdirSync(LOGS_DIR, { recursive: true });
+}
+
+// Log file path with timestamp
+const LOG_FILE = path.join(LOGS_DIR, `email-log-${new Date().toISOString().split('T')[0]}.log`);
+
+/**
+ * Log message to console and file
+ * @param {string} message - Message to log
+ */
+function log(message) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ${message}`;
+  
+  console.log(logMessage);
+  
+  // Append to log file
+  fs.appendFileSync(LOG_FILE, logMessage + '\n');
+}
+
 // Function to find the newest HTML file in a directory
 function findNewestHtmlFile(directory) {
   try {
@@ -78,28 +101,6 @@ if (!emailTemplatePath) {
   }
 }
 
-// Create logs directory if it doesn't exist
-const LOGS_DIR = path.join(__dirname, 'email-logs');
-if (!fs.existsSync(LOGS_DIR)) {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
-}
-
-// Log file path with timestamp
-const LOG_FILE = path.join(LOGS_DIR, `email-log-${new Date().toISOString().split('T')[0]}.log`);
-
-/**
- * Log message to console and file
- * @param {string} message - Message to log
- */
-function log(message) {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}`;
-  
-  console.log(logMessage);
-  
-  // Append to log file
-  fs.appendFileSync(LOG_FILE, logMessage + '\n');
-}
 
 /**
  * Move the email template to the sent folder
