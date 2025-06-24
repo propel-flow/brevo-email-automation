@@ -140,38 +140,116 @@ function showNotification(title, message) {
 }
 
 /**
+ * Extract template information from HTML file name
+ * @param {string} fileName - HTML file name
+ * @returns {Object} Template information
+ */
+function extractTemplateInfo(fileName) {
+  // Remove .html extension
+  const baseName = fileName.replace('.html', '');
+  
+  // Convert underscores and hyphens to spaces and capitalize words
+  const templateName = baseName
+    .replace(/[_-]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+  
+  // Create a subject line based on the template name
+  const subject = `${templateName} - Propel Flow AI`;
+  
+  // Extract tag from the first part of the file name (before first underscore or hyphen)
+  // or use 'general' if no separator is found
+  let tag = 'general';
+  const separatorMatch = baseName.match(/[_-]/);
+  if (separatorMatch) {
+    tag = baseName.substring(0, separatorMatch.index).toLowerCase();
+  }
+  
+  return {
+    templateName,
+    subject,
+    tag
+  };
+}
+
+/**
+ * Find HTML files in the email-templates directory (excluding the sent folder)
+ * @returns {Array<string>} Array of HTML file paths
+ */
+function findHtmlFiles() {
+  const templatesDir = path.join(__dirname, 'email-templates');
+  const sentDir = path.join(templatesDir, 'sent');
+  
+  // Create sent directory if it doesn't exist
+  if (!fs.existsSync(sentDir)) {
+    fs.mkdirSync(sentDir, { recursive: true });
+  }
+  
+  // Get all files in the templates directory
+  const files = fs.readdirSync(templatesDir);
+  
+  // Filter for HTML files and exclude directories
+  return files.filter(file => {
+    const filePath = path.join(templatesDir, file);
+    return fs.statSync(filePath).isFile() && 
+           path.extname(file).toLowerCase() === '.html';
+  }).map(file => path.join(templatesDir, file));
+}
+
+/**
+ * Move a file to the sent folder
+ * @param {string} filePath - Path to the file
+ */
+function moveToSentFolder(filePath) {
+  const fileName = path.basename(filePath);
+  const sentDir = path.join(__dirname, 'email-templates', 'sent');
+  const destPath = path.join(sentDir, fileName);
+  
+  // Add timestamp to avoid overwriting files with the same name
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const destPathWithTimestamp = path.join(
+    sentDir, 
+    `${path.parse(fileName).name}_${timestamp}${path.extname(fileName)}`
+  );
+  
+  try {
+    fs.copyFileSync(filePath, destPathWithTimestamp);
+    fs.unlinkSync(filePath);
+    log(`Moved ${fileName} to sent folder as ${path.basename(destPathWithTimestamp)}`);
+  } catch (error) {
+    log(`Error moving file to sent folder: ${error.message}`);
+  }
+}
+
+/**
  * Main function to upload templates
  */
 async function main() {
   log('Starting Brevo template upload process...');
   
-  // Configure the templates to upload - using relative paths for GitHub Actions compatibility
-  const templateConfigs = [
-    {
-      templateName: "Welcome Email 1 - Thanks",
-      subject: "Welcome to Propel Flow AI - Thanks for Subscribing!",
-      htmlFile: path.join(__dirname, "email-templates", "welcome_email_1_thanks.html"),
+  // Find HTML files to upload
+  const htmlFiles = findHtmlFiles();
+  
+  if (htmlFiles.length === 0) {
+    log('No HTML files found in the email-templates directory');
+    return;
+  }
+  
+  log(`Found ${htmlFiles.length} HTML files to upload`);
+  
+  // Configure the templates to upload
+  const templateConfigs = htmlFiles.map(htmlFile => {
+    const fileName = path.basename(htmlFile);
+    const templateInfo = extractTemplateInfo(fileName);
+    
+    return {
+      templateName: templateInfo.templateName,
+      subject: templateInfo.subject,
+      htmlFile: htmlFile,
       senderName: "Propel Flow",
       senderEmail: "katie@propel-flow.com",
-      tag: "welcome-series"
-    },
-    {
-      templateName: "Welcome Email 2 - Assessment",
-      subject: "Your Propel Flow AI Assessment",
-      htmlFile: path.join(__dirname, "email-templates", "welcome_email_2_assessment.html"),
-      senderName: "Propel Flow",
-      senderEmail: "katie@propel-flow.com",
-      tag: "welcome-series"
-    },
-    {
-      templateName: "Welcome Email 3 - Vendor Traps",
-      subject: "Avoiding Common AI Vendor Traps",
-      htmlFile: path.join(__dirname, "email-templates", "welcome_email_3_vendor_traps.html"),
-      senderName: "Propel Flow",
-      senderEmail: "katie@propel-flow.com",
-      tag: "welcome-series"
-    }
-  ];
+      tag: templateInfo.tag
+    };
+  });
   
   try {
     // Upload templates
@@ -207,6 +285,11 @@ async function main() {
     const resultsFile = path.join(LOGS_DIR, `template-upload-results-${new Date().toISOString().split('T')[0]}.json`);
     fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
     log(`\nResults saved to: ${resultsFile}`);
+    
+    // Move successfully uploaded files to the sent folder
+    results.filter(r => r.success).forEach(r => {
+      moveToSentFolder(r.config.htmlFile);
+    });
     
     // Send notification email
     await sendNotificationEmail(results);
