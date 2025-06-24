@@ -74,8 +74,19 @@ The system extracts template information from the HTML file names:
 This workflow replaces the `setup-daily-email-cron.js` cron job.
 
 - **Schedule**: Runs daily at 9:00 AM UTC (configurable in `.github/workflows/daily-email-sender.yml`)
-- **Manual Trigger**: Available with optional custom email template path
+- **Manual Trigger**: Available without any parameters needed
+- **Automatic File Selection**: Automatically selects the newest HTML file from:
+  1. First checks the `email-templates/ready-to-send` directory
+  2. If no files found there, checks the main `email-templates` directory
+- **File Movement**: After sending, the HTML file is moved to the `sent-emails` directory with a timestamp
 - **Artifacts**: Email logs are saved as workflow artifacts for 7 days
+
+#### Recommended Workflow for Daily Emails
+
+1. Place your HTML email file in the `email-templates/ready-to-send` directory
+2. The workflow will automatically pick up the newest file when it runs
+3. After sending, the file will be moved to the `sent-emails` directory
+4. You can place the next day's email in the `ready-to-send` directory
 
 ### Template Uploader
 

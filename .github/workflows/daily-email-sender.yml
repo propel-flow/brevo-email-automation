@@ -5,11 +5,7 @@ on:
     # Run at 9:00 AM UTC (adjust as needed)
     - cron: '0 9 * * *'
   workflow_dispatch:
-    inputs:
-      email_template_path:
-        description: 'Path to email template file'
-        required: false
-        default: 'email-templates/welcome_email_1_thanks.html'
+    # No inputs needed - will automatically find the newest HTML file
 
 jobs:
   send-daily-emails:
@@ -31,7 +27,7 @@ jobs:
         run: mkdir -p email-logs
 
       - name: Run daily email sender
-        run: node daily-email-sender.js ${{ github.event.inputs.email_template_path || 'email-templates/welcome_email_1_thanks.html' }}
+        run: node daily-email-sender.js
         env:
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
           NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
