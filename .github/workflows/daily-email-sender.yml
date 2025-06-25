@@ -44,6 +44,8 @@ jobs:
           # Only add email-templates/ as sent-emails/ is in .gitignore
           git add email-templates/
           git diff --quiet && git diff --staged --quiet || git commit -m "Move email template to sent folder [skip ci]"
+          # Use GITHUB_TOKEN for authentication
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
           git push
 
       - name: Upload logs as artifacts
