@@ -7,6 +7,10 @@ on:
   workflow_dispatch:
     # Allow manual triggering
 
+# Set permissions for the GITHUB_TOKEN
+permissions:
+  contents: write
+
 jobs:
   upload-templates:
     runs-on: ubuntu-latest

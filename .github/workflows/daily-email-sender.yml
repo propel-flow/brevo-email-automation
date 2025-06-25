@@ -7,6 +7,10 @@ on:
   workflow_dispatch:
     # No inputs needed - will automatically find the newest HTML file
 
+# Set permissions for the GITHUB_TOKEN
+permissions:
+  contents: write
+
 jobs:
   send-daily-emails:
     runs-on: ubuntu-latest
