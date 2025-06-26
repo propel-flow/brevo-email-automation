@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 
+// Optional: Add cheerio for HTML parsing if not already installed
+// To install: npm install cheerio
+const cheerio = require('cheerio');
+
 // API configuration - use environment variables for GitHub Actions
 const API_KEY = process.env.BREVO_API_KEY || 'your-brevo-api-key-here';
 const BASE_URL = 'https://api.brevo.com/v3';
@@ -33,6 +37,27 @@ async function readEmailTemplate(templatePath) {
 }
 
 /**
+ * Extract tagline from HTML content
+ * @param {string} htmlContent - The HTML content of the email
+ * @returns {string} The extracted tagline or a default value
+ */
+function extractTaglineFromHTML(htmlContent) {
+  try {
+    // Use cheerio to parse the HTML
+    const $ = cheerio.load(htmlContent);
+    
+    // Try to find the tagline element
+    const tagline = $('.tagline').text().trim();
+    
+    // If tagline is found, return it, otherwise return a default
+    return tagline || 'Propel Flow AI';
+  } catch (error) {
+    console.error('❌ Error extracting tagline:', error.message);
+    return 'Propel Flow AI';
+  }
+}
+
+/**
  * Send the welcome email to a subscriber using direct HTTP API
  * @param {string} subscriberEmail - The subscriber's email address
  * @param {string} subscriberName - The subscriber's name
@@ -45,6 +70,9 @@ async function sendWelcomeEmail(subscriberEmail, subscriberName, attributes = {}
     // Read the HTML template
     const htmlContent = await readEmailTemplate(templatePath);
     
+    // Extract tagline from the HTML content
+    const tagline = extractTaglineFromHTML(htmlContent);
+    
     // Create the email payload
     const emailPayload = {
       sender: {
@@ -55,7 +83,7 @@ async function sendWelcomeEmail(subscriberEmail, subscriberName, attributes = {}
         email: subscriberEmail,
         name: subscriberName
       }],
-      subject: "Welcome to Propel Flow AI - Thanks for Subscribing!",
+      subject: `${tagline} - Propel Flow`,
       htmlContent: htmlContent,
       params: {
         unsubscribe: "{{ unsubscribe }}",
