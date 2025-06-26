@@ -36,7 +36,7 @@ jobs:
       - name: Run daily email sender
         run: node daily-email-sender.js
         env:
-          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY_V2 }}
           NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
