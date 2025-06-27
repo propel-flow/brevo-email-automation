@@ -6,8 +6,8 @@ const { sendToSubscribers } = require('./send-welcome-email');
 
 // Define the sent folder path - use relative path for GitHub Actions compatibility
 const SENT_FOLDER = process.env.GITHUB_ACTIONS 
-  ? path.join(process.env.GITHUB_WORKSPACE, 'sent-emails')
-  : path.join(__dirname, 'sent-emails');
+  ? path.join(process.env.GITHUB_WORKSPACE, 'email-templates', 'sent')
+  : path.join(__dirname, 'email-templates', 'sent');
 
 // Create logs directory if it doesn't exist
 const LOGS_DIR = path.join(__dirname, 'email-logs');
