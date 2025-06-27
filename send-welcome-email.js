@@ -86,8 +86,6 @@ async function sendWelcomeEmail(subscriberEmail, subscriberName, attributes = {}
       subject: `${tagline} - Propel Flow`,
       htmlContent: htmlContent,
       params: {
-        unsubscribe: "{{ unsubscribe }}",
-        update_profile: "{{ update_profile }}",
         // Add all subscriber attributes for personalization
         ...attributes
       }
